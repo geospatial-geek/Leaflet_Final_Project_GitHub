@@ -1,0 +1,345 @@
+	<!DOCTYPE html>
+  <html>
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <title>Final Project BG Hospitals</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css" type="text/css" crossorigin="">
+      
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js" crossorigin=""></script>
+      <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet-src.js" integrity="sha512-WXoSHqw/t26DszhdMhOXOkI7qCiv5QWXhH9R7CgvgZMHz1ImlkVQ3uNsiQKu5wwbbxtPzFXd1hK4tzno2VqhpA==" crossorigin=""></script>
+      
+      <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+      
+      <link rel="stylesheet" href="style2_April26th_6.30pm.css" type="text/css">
+	  <link rel="stylesheet" href="style.css" type="text/css">
+	  
+	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/2.2.1/js/bootstrap.min.js"></script>
+	 
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/2.2.1/css/bootstrap.min.css">
+	   
+      <!-- <script src="cities2.js"></script> -->
+      <script src="cities_dist2.js"></script>
+      
+
+	   <script src="bg_hostpitals_gisco_geojson_4326.js"></script>
+	    <script src="vw_provinces_nsi_hospitals_4326.js"></script>
+       
+		
+
+        <link rel="stylesheet" href="MarkerCluster.css" />
+        <link rel="stylesheet" href="MarkerCluster.Default.css" />
+        <script src="leaflet.markercluster-src.js"></script> 
+
+        <link rel="stylesheet" href="leaflet-search-master\dist\leaflet-search.src.css"> 
+        <script src="leaflet-search-master\dist\leaflet-search.src.js"></script>
+
+
+		<script type="text/javascript">
+    
+		// Variables
+		var map;
+		var hospitalLayer;
+		
+		// Selection variables
+		var selection;
+		var selectedLayer;
+		//var selectedFeature;
+
+		function init() {
+
+		 // create map and set center and zoom level
+          map = new L.map('mapid');
+          map.setView([42.7339, 25.4858],7);
+			
+		 // create carto basemap
+		   var cartoGrey = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+			maxZoom: 19,
+			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+		  });
+		  cartoGrey.addTo(map);
+		  
+		// create and add osm tile layer 
+          var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, 
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' 
+          }); 
+		  
+          // create osm humanitarian layer (not adding it to map) 
+          var osmHumanitarian = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+            maxZoom: 19, 
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' 
+          });
+		  
+
+		  function polystyle(feature) {
+                    return {
+                        // fillColor: 'beige',  // polygon color - now left blank
+                        fillOpacity: 0,   //polygon opacity
+                        weight: 4,
+                        opacity: .1,  //Outline opacity
+                        color: 'green'  //Outline color
+                        
+                    };
+                }
+		  var provinceLayer = L.geoJSON(vw_provincesData,  { 
+            style:polystyle, // from style function defined above
+			onEachFeature: function(feature, layer) {
+            layer.bindPopup('<b>' + feature.properties.provinces_en + ' Province </b><br> Public Hospitals in Province: ' + feature.properties.state_hospitalstate_hospital + '<br> Public Hospital Beds in Province: ' + feature.properties.beds_state_hospital)}
+			}).addTo(map);
+
+
+
+
+		  // create icons for hospitals (selected and unselected)
+			var hospitalIcon = L.icon({
+			  iconUrl: 'hospital_unselected.svg',  //default orange hospital icon
+			  iconSize: [30,30] //[20,20] //[40,40]
+			});
+
+			var selectedHospitalIcon = L.icon({
+			  iconUrl: 'hospital_selected.svg',  //selected blue hospital icon
+			  iconSize: [30,30] //[20,20] //[40,40]
+			});
+
+			// handle click events on hospital features
+			function hospitalsOnEachFeature(feature, layer){
+			  layer.on({
+				click: function(e) {
+				  if (selection) {
+					resetStyles();
+				  }
+				  e.target.setIcon(selectedHospitalIcon);  //selected hospital based on click event
+				  selection = e.target;
+				  selectedLayer = hospitalLayer;
+							  
+				  // Insert HTML with the feature name
+				  buildSummaryLabel(feature);
+
+				  L.DomEvent.stopPropagation(e); // stop click event from being propagated further
+				}
+			  });
+			}
+
+  
+		  
+        
+	
+		  // Hospital Custom radius and icon create function
+		  var markersHospital = L.markerClusterGroup({
+			maxClusterRadius: 120,
+			iconCreateFunction: function (cluster) {
+					var childCount = cluster.getChildCount();
+
+    		var c = ' marker-hospital-';
+    		if (childCount < 10) {
+    			c += 'small';
+    		} else if (childCount < 100) {
+    			c += 'medium';
+    		} else {
+    			c += 'large';
+    		}
+    		return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker marker-hospital' + c, iconSize: new L.Point(40, 40) });
+			},
+			//Disable all of the defaults:
+			disableClusteringAtZoom:14, spiderfyOnMaxZoom: false, showCoverageOnHover: false, zoomToBoundsOnClick: true
+		});
+		  
+		  var hospitalLayer = new L.geoJSON(hospitalData,{
+			  pointToLayer: function (feature, latlng) {
+				return L.marker(latlng, {icon: hospitalIcon});
+			  },
+			  onEachFeature: hospitalsOnEachFeature
+			  }
+			);    
+			
+        //hospitalLayer.addTo(map)		  
+		markersHospital.addLayer(hospitalLayer).addTo(map); 
+
+
+
+	// handle clicks on the map  that didn't hit a feature
+	map.addEventListener('click', function(e) {
+			  if (selection) {
+				resetStyles();
+				selection = null;
+				document.getElementById('summaryLabel').innerHTML = '<p>Click a hospital on the map to get more information.</p>';
+			  }
+			});
+
+			// function to set the old selected feature back to its original symbol. Used when the map or a feature is clicked.
+			function resetStyles(){
+			  if (selectedLayer === hospitalLayer) selection.setIcon(hospitalIcon);
+			  else if (selectedLayer === otherLayer) selectedLayer.resetStyle(selection);
+			}
+
+			// function to build the HTML for the summary label using the selected feature's "name" property
+			function buildSummaryLabel(currentFeature){
+				  var featureName = currentFeature.properties.hospital_name || "Unnamed feature";
+				  var featureCity = currentFeature.properties.city || ""; // Hospital City
+				  var bedCapacity = currentFeature.properties.cap_beds || ""; // Bed Capacity
+
+				  var summaryHTML = '<p style="font-size:18px"><b>Hospital:</b> ' + featureName + '</p>';
+				
+					// Concatenate the additional label if it exists
+					if (featureCity !== "") {summaryHTML += '<p><b>City:</b> ' + featureCity + '</p>';}
+					if (bedCapacity !== "") {summaryHTML += '<p><b>Bed Capacity:</b> ' + bedCapacity + '</p>';}
+					
+			document.getElementById('summaryLabel').innerHTML = summaryHTML;
+			}
+
+
+
+
+            //City cluster variables
+		    var markers = L.markerClusterGroup({
+			maxClusterRadius: 90,
+			iconCreateFunction: function (cluster) {
+					var childCount = cluster.getChildCount();
+
+    		var c = ' marker-city-';
+    		if (childCount < 10) {
+    			c += 'small';
+    		} else if (childCount < 100) {
+    			c += 'medium';
+    		} else {
+    			c += 'large';
+    		}
+    		return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker marker-city' + c, iconSize: new L.Point(40, 40) });
+			},
+			//Disable all of the defaults:
+			spiderfyOnMaxZoom: true, showCoverageOnHover: false, zoomToBoundsOnClick: true
+		});
+
+            // city styling
+            var geojsonMarkerOptions = {
+            radius: 8,
+            fillColor:  "#8dd3c7",  //"#ff7800",
+            color: "#000",
+            weight: .8,
+            opacity: .7,
+            fillOpacity: 0.7
+              };
+
+            // cities 
+            var geojsonLayer = L.geoJSON(citiesData,  { 
+                pointToLayer: function (feature, latlng) {
+                        return L.circleMarker(latlng, geojsonMarkerOptions);
+                    },
+                onEachFeature: function(feature, layer) {
+                var cityName = feature.properties.city_name_en || feature.properties.city_name_bg;
+                var distance = (feature.properties.dist / 1000).toFixed(1); // Rounds to one decimal place
+                layer.bindPopup('City: <b>' + cityName + '  </b>   <br>Distance to nearest hospital: <b>' + distance + ' km</b> <br>Hospital: <b> '+ feature.properties.hospital_name +' </b>')}
+                });
+                //.addTo(map);
+
+            // add cities clusters to map
+            markers.addLayer(geojsonLayer)
+            map.addLayer(markers)
+
+			// Unclustered city2 styling
+            function geojsonMarkerOptionsColor (feature) {
+                var distance_km = feature.properties.dist; // Accessing distance from feature.properties
+                if (distance_km > 62200) {
+                    return { fillColor: "#d73027", weight: 0, fillOpacity: 0.5 }; // Style for distance > 62.2 km
+                } else if (distance_km > 34600) {
+                    return { fillColor: "#d73027", weight: 0, fillOpacity: 0.5 }; // Style for 34.6 km - 62.2 km
+                } else if (distance_km > 23400) {
+                    return { fillColor: "#fc8d59", weight: 0, fillOpacity: 0.5 }; // Style for 23.4 km - 34.6 km
+                } else if (distance_km > 15500) {
+                    return { fillColor: "#fee090", weight: 0, fillOpacity: 0.5 }; // Style for 15.5 km - 23.4 km
+                } else if (distance_km > 8700) {
+                    return { fillColor: "#b5e8f5", weight: 0, fillOpacity: 0.5 }; // Style for 8.7 km - 15.5 km
+                } else {
+                    return { fillColor: "#91bfdb", weight: 0, fillOpacity: 0.5 }; // Default style for less than 8.7 km
+                }
+            }
+
+             // Unclustered city2 geoJSON and pop-up
+             var geojsonColorLayer = L.geoJSON(citiesData, {
+                    pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, geojsonMarkerOptionsColor(feature)); // Pass feature to the function
+            },
+            onEachFeature: function(feature, layer) {
+                var cityName = feature.properties.city_name_en || feature.properties.city_name_bg;
+                var distance = (feature.properties.dist / 1000).toFixed(1); // Rounds to one decimal place
+                layer.bindPopup('City: <b>' + cityName + '  </b>   <br>Distance to nearest hospital: <b>' + distance + ' km</b> <br>Hospital: <b> '+ feature.properties.hospital_name +' </b>');
+            },
+        });
+
+
+
+		
+			
+
+		// define basemap and thematic layers and add layer switcher control
+          var basemaps = {
+            "OSM": osm,
+            "OSM Humanitarian": osmHumanitarian,
+			"Carto Grey": cartoGrey
+          };
+
+
+		var overlays = {
+            "Hospitals Clustered": markersHospital,
+            "Cities Clustered": markers,
+            "Most Vunerable Places": geojsonColorLayer,
+            "Provinces": provinceLayer
+          };
+          L.control.layers(basemaps,overlays).addTo(map);
+
+
+
+        //Search
+
+          // city search
+		  const citySearchControl = new L.Control.Search({
+			position: 'topright',
+            autoCollapse: true,
+			layer: markers,
+			zoom: 13,
+            propertyName: 'city_name_en'
+            });
+
+            map.addControl(citySearchControl);  
+		  
+		// province search
+		const provinceSearchControl = new L.Control.Search({
+            position: 'topright',
+            autoCollapse: true,
+			layer: provinceLayer,
+			zoom: 9,
+            propertyName: 'provinces_en'
+            });
+
+            map.addControl(provinceSearchControl); 
+		  
+        }
+            
+      </script>
+    </head>
+<div class="general">
+<body onload="init()">
+	
+    <div class="left">
+       <div class="title"><h1>Hospital Accessibility in Bulgaria</h1></div>
+                <div id="mapid"></div>
+                <img src="Distance from Hospital Distribution.png" alt="Distance From Hospital Histogram">
+				<img src="ScatterPlot_best_fit.png" alt="Scatter Plot Population and Distance to Hospital">
+                <img src="Hospital Beds per 1000 People by Province.png" alt="hospital beds per 1000 by province">
+				<img src="Top_20_Nearest Cities_final.png" alt="Top 20 Hospitals with Highest Number of Nearest Cities">
+	</div>
+            <div class="right">
+				<div class="layers"><b>Click here for layers</b></div>
+                <div class="city-search"> <b>Search cities</b></div>
+                <div class="province-search"><b>Search provinces</b></div>
+
+				<div id = 'summaryLabel'>
+					<h3>Legend</h3>
+					<img src="legend_icon_green.png" alt="Hospital Clusters">   Hospital Clusters<br>
+					<img src="legend_icon_blue.png" alt="Hospital Clusters">    City Clusters<br>
+					<br><p>Click on the <b>hospital icon</b> to get <br> more information about a particular hospital. <br><br>
+                     Click on a <b>province</b> to find the total number of <br> state hospital beds in the province. </p></div>				
+		</div>				
+      </div>
+  </body>
+</html>

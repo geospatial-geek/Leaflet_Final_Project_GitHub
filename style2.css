@@ -1,0 +1,42 @@
+.general {
+	display: flex;
+	height: 100%;
+	text-align: center;
+	background: #edffff;
+}
+
+#mapid {
+    height: 400px;
+	width: 800px;
+    border: 1px solid #ccc;
+	font-family: Arial, sans-serif;
+	justify-content: center;
+	margin-bottom: 60px;
+	margin-left: 60px;
+}
+
+.leaflet-container {
+    background: #fff;
+	font-family: Arial, sans-serif;
+}
+
+.title {
+	margin-top: 30px;
+}
+
+.left {
+  display: flex;
+  width: 890px;
+  flex-shrink: 0;
+  justify-content: space-between;
+  flex-direction: column;
+  margin-left: 28px;
+}
+
+.right {
+  display: flex;
+  width: 300;
+  align-items: center;
+  text-align: left;
+ }
+

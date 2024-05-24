@@ -1,0 +1,108 @@
+/* Styles go here */
+.mycluster.foo { background-color: red;}
+.mycluster.bar { background-color: blue;}
+
+.leaflet-cluster-anim .leaflet-marker-icon, .leaflet-cluster-anim .leaflet-marker-shadow {
+	-webkit-transition: -webkit-transform 0.3s ease-out, opacity 0.3s ease-in;
+	-moz-transition: -moz-transform 0.3s ease-out, opacity 0.3s ease-in;
+	-o-transition: -o-transform 0.3s ease-out, opacity 0.3s ease-in;
+	transition: transform 0.3s ease-out, opacity 0.3s ease-in;
+}
+
+.leaflet-cluster-spider-leg {
+	/* stroke-dashoffset (duration and function) should match with leaflet-marker-icon transform in order to track it exactly */
+	-webkit-transition: -webkit-stroke-dashoffset 0.3s ease-out, -webkit-stroke-opacity 0.3s ease-in;
+	-moz-transition: -moz-stroke-dashoffset 0.3s ease-out, -moz-stroke-opacity 0.3s ease-in;
+	-o-transition: -o-stroke-dashoffset 0.3s ease-out, -o-stroke-opacity 0.3s ease-in;
+	transition: stroke-dashoffset 0.3s ease-out, stroke-opacity 0.3s ease-in;
+}
+
+#map {
+	width: 800px; 
+	height: 600px; 
+	border: 1px solid #ccc;
+}
+
+#progress {
+    display: none;
+    position: absolute;
+    z-index: 1000;
+    left: 400px;
+    top: 300px;
+    width: 200px;
+    height: 20px;
+    margin-top: -20px;
+    margin-left: -100px;
+    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    padding: 2px;
+}
+
+#progress-bar {
+    width: 0;
+    height: 100%;
+    background-color: #76A6FC;
+    border-radius: 4px;
+}
+
+.marker-city-small {
+	background-color: rgba(105, 226, 241, 0.4);
+	}
+.marker-city-small div {
+	background-color: rgba(105, 226, 241, 0.4);
+	}
+
+.marker-city-medium {
+	background-color: rgba(61, 201, 219, 0.4);
+	}
+.marker-city-medium div {
+	background-color: rgba(61, 201, 219, 0.4);
+	}
+
+.marker-city-large {
+	background-color: rgba(98, 168, 226, 0.5);
+	}
+.marker-city-large div {
+	background-color: rgba(98, 168, 226, 0.5);
+	}
+
+.marker {
+	background-clip: padding-box;
+	border-radius: 20px;
+	}
+.marker div {
+	width: 30px;
+	height: 30px;
+	margin-left: 5px;
+	margin-top: 5px;
+
+	text-align: center;
+	border-radius: 15px;
+	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	}
+
+.marker span {
+	line-height: 30px;
+	}
+
+.marker-hospital-small {
+    background-color: rgba(109, 226, 31, 0.5);
+    }
+.marker-hospital-small div {
+    background-color: rgba(109, 226, 31, 0.5);
+    }
+
+.marker-hospital-medium {
+    background-color: rgba(64, 231, 22, 0.5);
+    }
+.marker-hospital-medium div {
+    background-color: rgba(31, 240, 12, 0.5);
+    }
+
+.marker-hospital-large {
+    background-color: rgba(23, 230, 16, 0.5);
+    }
+.marker-hospital-large div {
+    background-color: rgba(51, 221, 9, 0.5);
+    }
